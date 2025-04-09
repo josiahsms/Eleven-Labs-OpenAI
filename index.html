@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Text to Speech App</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Text to Speech</h1>
+    <textarea id="textInput" placeholder="Type something to convert to speech..."></textarea>
+    <button id="speakBtn">Speak</button>
+    <audio id="audioPlayer" controls></audio>
+  </div>
+  <script>
+    const speakBtn = document.getElementById('speakBtn');
+    const textInput = document.getElementById('textInput');
+    const audioPlayer = document.getElementById('audioPlayer');
+
+    speakBtn.addEventListener('click', async () => {
+      const text = textInput.value.trim();
+      if (!text) return alert('Please enter some text.');
+
+      try {
+        const response = await fetch('/api/tts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ text })
+        });
+
+        if (!response.ok) {
+          throw new Error('API request failed');
+        }
+
+        const blob = await response.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        audioPlayer.src = audioUrl;
+        audioPlayer.play();
+      } catch (err) {
+        console.error(err);
+        alert('Something went wrong. Check the console for details.');
+      }
+    });
+  </script>
+</body>
+</html>
