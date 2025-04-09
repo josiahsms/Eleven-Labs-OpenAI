@@ -1,38 +1,44 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+    return res.status(405).json({ message: 'Method not allowed' });
   }
 
   const { text } = req.body;
+  const ELEVEN_API_KEY = process.env.ELEVENLABS_API_KEY;
+  const VOICE_ID = 'Rachel'; // or your preferred voice ID
 
-  if (!text) {
-    return res.status(400).json({ error: 'Text is required' });
+  if (!text || !ELEVEN_API_KEY) {
+    return res.status(400).json({ message: 'Missing text or API key' });
   }
 
   try {
-    console.log('Request body:', { text });  // Log the text received
-
-    const elevenRes = await fetch('https://api.elevenlabs.io/v1/text-to-speech/YOUR_VOICE_ID', {
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
       method: 'POST',
       headers: {
-        'xi-api-key': process.env.ELEVENLABS_API_KEY,
+        'xi-api-key': ELEVEN_API_KEY,
         'Content-Type': 'application/json',
+        'Accept': 'audio/mpeg'
       },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({
+        text,
+        model_id: 'eleven_monolingual_v1',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.75
+        }
+      })
     });
 
-    console.log('ElevenLabs response:', elevenRes);  // Log the response
-
-    if (!elevenRes.ok) {
-      const errorText = await elevenRes.text();
-      throw new Error(`ElevenLabs API failed: ${errorText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('ElevenLabs error:', errorText);
+      return res.status(500).json({ message: 'Failed to fetch audio', error: errorText });
     }
 
-    const audioBuffer = await elevenRes.buffer();
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.send(audioBuffer);
+    response.body.pipe(res);
   } catch (err) {
-    console.error('API request failed:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('API route error:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
   }
 }
