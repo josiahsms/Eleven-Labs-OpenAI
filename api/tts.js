@@ -5,7 +5,7 @@ export default async function handler(req, res) {
 
   const { text } = req.body;
   const ELEVEN_API_KEY = process.env.ELEVENLABS_API_KEY;
-  const VOICE_ID = 'Rachel';
+  const VOICE_ID = '9BWtsMINqrJLrRacOk9x';
 
   if (!text || !ELEVEN_API_KEY) {
     return res.status(400).json({ message: 'Missing text or API key' });
