@@ -1,9 +1,4 @@
 export default async function handler(req, res) {
-  // Add CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');  // Allow all origins
-  res.setHeader('Access-Control-Allow-Methods', 'POST');  // Allow only POST requests
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');  // Allow Content-Type header
-
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -15,7 +10,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    const elevenRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+    console.log('Request body:', { text });  // Log the text received
+
+    const elevenRes = await fetch('https://api.elevenlabs.io/v1/text-to-speech/YOUR_VOICE_ID', {
       method: 'POST',
       headers: {
         'xi-api-key': process.env.ELEVENLABS_API_KEY,
@@ -24,11 +21,11 @@ export default async function handler(req, res) {
       body: JSON.stringify({ text }),
     });
 
-    const elevenResText = await elevenRes.text();
-    console.log(elevenResText);
+    console.log('ElevenLabs response:', elevenRes);  // Log the response
 
     if (!elevenRes.ok) {
-      throw new Error(`ElevenLabs API failed: ${elevenResText}`);
+      const errorText = await elevenRes.text();
+      throw new Error(`ElevenLabs API failed: ${errorText}`);
     }
 
     const audioBuffer = await elevenRes.buffer();
