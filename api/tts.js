@@ -1,43 +1,36 @@
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
   const { text } = req.body;
-  const ELEVEN_API_KEY = process.env.ELEVENLABS_API_KEY;
-  const VOICE_ID = 'Rachel'; // or use any other voice ID
 
-  if (!text || !ELEVEN_API_KEY) {
-    return res.status(400).json({ message: 'Missing text or API key' });
+  if (!text) {
+    return res.status(400).json({ error: 'Text is required' });
   }
 
   try {
     const elevenRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
       method: 'POST',
       headers: {
-        'xi-api-key': ELEVEN_API_KEY,
+        'xi-api-key': process.env.ELEVENLABS_API_KEY,
         'Content-Type': 'application/json',
-        'Accept': 'audio/mpeg'
       },
-      body: JSON.stringify({
-        text,
-        model_id: 'eleven_monolingual_v1',
-        voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75
-        }
-      })
+      body: JSON.stringify({ text }),
     });
 
+    const elevenResText = await elevenRes.text();  // Log API response for debugging
+    console.log(elevenResText);  // Check the raw response from ElevenLabs
+
     if (!elevenRes.ok) {
-      const error = await elevenRes.text();
-      return res.status(500).json({ message: 'Failed to fetch audio', error });
+      throw new Error(`ElevenLabs API failed: ${elevenResText}`);
     }
 
+    const audioBuffer = await elevenRes.buffer();
     res.setHeader('Content-Type', 'audio/mpeg');
-    elevenRes.body.pipe(res); // stream audio back
+    res.send(audioBuffer);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('API request failed:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 }
