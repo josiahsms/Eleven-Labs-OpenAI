@@ -1,76 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Text to Speech App</title>
-  <link rel="stylesheet" href="/styles.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Text to Speech App</title>
+    <link rel="stylesheet" href="/styles.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>Text to Speech</h1>
-    <textarea id="textInput" placeholder="Type something to convert to speech..."></textarea>
-    <button id="speakBtn">Speak</button>
-    <audio id="audioPlayer" controls></audio>
+    <div class="container">
+        <h1>Text to Speech</h1>
+        <textarea id="textInput" placeholder="Type something to convert to speech..."></textarea>
 
-    <div class="pronunciation-editor">
-      <h2>Custom Pronunciations</h2>
-      <input type="text" id="wordInput" placeholder="Word" />
-      <input type="text" id="phonemeInput" placeholder="IPA Pronunciation" />
-      <button id="addPronunciationBtn">Add</button>
+        <div id="phonemeInputSection">
+            <h2>Custom Pronunciations</h2>
+            <div id="phonemeInputs">
+                </div>
+            <button id="addPhonemeBtn">Add Pronunciation</button>
+        </div>
+
+        <button id="speakBtn">Speak</button>
+        <audio id="audioPlayer" controls></audio>
     </div>
-  </div>
+    <script>
+        const speakBtn = document.getElementById('speakBtn');
+        const textInput = document.getElementById('textInput');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const phonemeInputs = document.getElementById('phonemeInputs');
+        const addPhonemeBtn = document.getElementById('addPhonemeBtn');
 
-  <script>
-    const speakBtn = document.getElementById('speakBtn');
-    const textInput = document.getElementById('textInput');
-    const audioPlayer = document.getElementById('audioPlayer');
+        let phonemePairs = {}; // Object to store word-phoneme pairs
 
-    speakBtn.addEventListener('click', async () => {
-      const text = textInput.value.trim();
-      if (!text) return alert('Please enter some text.');
+        addPhonemeBtn.addEventListener('click', () => {
+            const wordInput = document.createElement('input');
+            wordInput.type = 'text';
+            wordInput.placeholder = 'Word';
 
-      try {
-        const response = await fetch('/api/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text })
+            const phonemeInput = document.createElement('input');
+            phonemeInput.type = 'text';
+            phonemeInput.placeholder = 'Phoneme (IPA)';
+
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = 'Remove';
+            removeBtn.addEventListener('click', () => {
+                phonemeInputs.removeChild(wordInput.parentElement);
+            });
+
+            const pairDiv = document.createElement('div');
+            pairDiv.appendChild(wordInput);
+            pairDiv.appendChild(phonemeInput);
+            pairDiv.appendChild(removeBtn);
+
+            phonemeInputs.appendChild(pairDiv);
+
+            wordInput.addEventListener('change', () => {
+                phonemePairs[wordInput.value] = phonemeInput.value;
+            });
+            phonemeInput.addEventListener('change', () => {
+                phonemePairs[wordInput.value] = phonemeInput.value;
+            });
         });
 
-        if (!response.ok) throw new Error('API request failed');
+        speakBtn.addEventListener('click', async () => {
+            let text = textInput.value.trim();
+            if (!text) return alert('Please enter some text.');
 
-        const blob = await response.blob();
-        const audioUrl = URL.createObjectURL(blob);
-        audioPlayer.src = audioUrl;
-        audioPlayer.play();
-      } catch (err) {
-        console.error(err);
-        alert('Something went wrong. Check the console for details.');
-      }
-    });
+            // Apply custom pronunciations
+            for (const word in phonemePairs) {
+                const regex = new RegExp(`\\b${word}\\b`, 'gi'); // Match whole words
+                text = text.replace(regex, `<phoneme alphabet="ipa" ph="${phonemePairs[word]}">${word}</phoneme>`);
+            }
 
-    document.getElementById('addPronunciationBtn').addEventListener('click', async () => {
-      const word = document.getElementById('wordInput').value.trim();
-      const phoneme = document.getElementById('phonemeInput').value.trim();
-      if (!word || !phoneme) return alert('Enter both word and pronunciation.');
+            try {
+                const response = await fetch('/api/tts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
 
-      try {
-        const res = await fetch('/api/add-pronunciation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ word, phoneme })
+                if (!response.ok) {
+                    throw new Error('API request failed');
+                }
+
+                const blob = await response.blob();
+                const audioUrl = URL.createObjectURL(blob);
+                audioPlayer.src = audioUrl;
+                audioPlayer.play();
+            } catch (err) {
+                console.error(err);
+                alert('Something went wrong. Check the console for details.');
+            }
         });
-
-        if (!res.ok) throw new Error('Failed to save pronunciation');
-
-        alert('Pronunciation saved!');
-        document.getElementById('wordInput').value = '';
-        document.getElementById('phonemeInput').value = '';
-      } catch (err) {
-        console.error(err);
-        alert('Error saving pronunciation.');
-      }
-    });
-  </script>
+    </script>
 </body>
 </html>
