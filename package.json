@@ -1,7 +1,11 @@
 {
-  "type": "module"
-}
-
-"dependencies": {
-  "firebase": "^9.x.x"
+  "name": "Eleven-labs-openai",
+  "version": "1.0.0",
+  "dependencies": {
+    "firebase": "^9.0.0",
+    "other-dependencies": "version"
+  },
+  "devDependencies": {
+    "dev-dependencies": "version"
+  }
 }
