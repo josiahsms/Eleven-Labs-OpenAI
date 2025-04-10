@@ -12,6 +12,13 @@
     <textarea id="textInput" placeholder="Type something to convert to speech..."></textarea>
     <button id="speakBtn">Speak</button>
     <audio id="audioPlayer" controls></audio>
+    <div class="pronunciation-editor">
+  <h2>Custom Pronunciations</h2>
+  <input type="text" id="wordInput" placeholder="Word" />
+  <input type="text" id="phonemeInput" placeholder="IPA Pronunciation" />
+  <button id="addPronunciationBtn">Add</button>
+</div>
+
   </div>
   <script>
     const speakBtn = document.getElementById('speakBtn');
