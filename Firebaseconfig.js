@@ -1,7 +1,7 @@
+// firebaseConfig.js
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,
   authDomain: process.env.FIREBASE_AUTH_DOMAIN,
@@ -11,7 +11,6 @@ const firebaseConfig = {
   appId: process.env.FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
 let app;
 try {
   app = initializeApp(firebaseConfig);
@@ -19,7 +18,6 @@ try {
   console.error("Firebase initialization error:", error);
 }
 
-// Initialize Cloud Firestore and get a reference to the service
 let db;
 if (app) {
   try {
