@@ -32,6 +32,11 @@ export default async function handler(req, res) {
                 phoneme: "ˈdʒoʊzaɪə",
                 alphabet: "ipa"
               }
+                {
+                word: "MYGAs",
+                phoneme: "maɪɡʌz",
+                alphabet: "ipa"
+              }
             ]
           }
         }
