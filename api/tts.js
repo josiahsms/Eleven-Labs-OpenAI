@@ -1,3 +1,7 @@
+// api/tts.js
+
+let customPronunciations = []; // This is a placeholder. You can switch to a database.
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -10,6 +14,13 @@ export default async function handler(req, res) {
   if (!text || !ELEVEN_API_KEY) {
     return res.status(400).json({ message: 'Missing text or API key' });
   }
+
+  // Prepare custom pronunciations if any
+  const pronunciationRules = customPronunciations.map(({ word, phoneme }) => ({
+    word,
+    phoneme,
+    alphabet: 'ipa',
+  }));
 
   try {
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
@@ -25,21 +36,8 @@ export default async function handler(req, res) {
         voice_settings: {
           stability: 0.5,
           similarity_boost: 0.75,
-          pronunciation: {
-            rules: [
-              {
-                word: "Josiah",
-                phoneme: "ˈdʒoʊzaɪə",
-                alphabet: "ipa"
-              }
-              {
-                word: "MYGAs",
-                phoneme: "maɪɡʌz",
-                alphabet: "ipa"
-              }
-            ]
-          }
-        }
+          pronunciation: { rules: pronunciationRules },
+        },
       })
     });
 
@@ -49,14 +47,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ message: 'Failed to fetch audio', error: errorText });
     }
 
-    if (response.headers.get('Content-Type') === 'application/json') {
-      const errorJson = await response.json();
-      console.error('ElevenLabs API JSON Error:', errorJson);
-      return res.status(500).json({ message: 'ElevenLabs API Error', error: JSON.stringify(errorJson) });
-    }
-
     const audioBuffer = Buffer.from(await response.arrayBuffer());
-
     res.setHeader('Content-Type', 'audio/mpeg');
     res.send(audioBuffer);
 
@@ -64,4 +55,22 @@ export default async function handler(req, res) {
     console.error('API route error:', err);
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
+}
+
+// api/add-pronunciation.js
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+
+  const { word, phoneme } = req.body;
+  if (!word || !phoneme) {
+    return res.status(400).json({ message: 'Word and phoneme are required' });
+  }
+
+  // Save the pronunciation rule (in memory or database)
+  customPronunciations.push({ word, phoneme });
+
+  return res.status(200).json({ message: 'Pronunciation saved' });
 }
