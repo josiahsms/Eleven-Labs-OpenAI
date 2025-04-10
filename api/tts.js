@@ -1,6 +1,23 @@
-// api/tts.js
+import firebase from 'firebase/app';
+import 'firebase/firestore';
 
-let customPronunciations = []; // This is a placeholder. You can switch to a database.
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyCs-ILSMK89OWcWCmoBvImEQXC-6PK11iw",
+  authDomain: "elevenlabs-agent.firebaseapp.com",
+  projectId: "elevenlabs-agent",
+  storageBucket: "elevenlabs-agent.firebasestorage.app",
+  messagingSenderId: "454181412358",
+  appId: "1:454181412358:web:1cdae2e5398a0407d12d87"
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+} else {
+  firebase.app();
+}
+
+const db = firebase.firestore();
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -15,12 +32,29 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Missing text or API key' });
   }
 
-  // Prepare custom pronunciations if any
-  const pronunciationRules = customPronunciations.map(({ word, phoneme }) => ({
-    word,
-    phoneme,
-    alphabet: 'ipa',
-  }));
+  // Function to get pronunciation from Firestore
+  const getPronunciation = async (word) => {
+    const docRef = db.collection('pronunciations').doc(word);
+    const doc = await docRef.get();
+    if (doc.exists) {
+      return doc.data().phoneme;
+    }
+    return null;
+  };
+
+  // Loop through words in the text to find custom pronunciations
+  const words = text.split(' ');
+  const pronunciationRules = [];
+  for (let word of words) {
+    const pronunciation = await getPronunciation(word);
+    if (pronunciation) {
+      pronunciationRules.push({
+        word,
+        phoneme: pronunciation,
+        alphabet: 'ipa'
+      });
+    }
+  }
 
   try {
     const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
@@ -36,8 +70,10 @@ export default async function handler(req, res) {
         voice_settings: {
           stability: 0.5,
           similarity_boost: 0.75,
-          pronunciation: { rules: pronunciationRules },
-        },
+          pronunciation: {
+            rules: pronunciationRules
+          }
+        }
       })
     });
 
@@ -45,6 +81,12 @@ export default async function handler(req, res) {
       const errorText = await response.text();
       console.error('ElevenLabs error:', errorText);
       return res.status(500).json({ message: 'Failed to fetch audio', error: errorText });
+    }
+
+    if (response.headers.get('Content-Type') === 'application/json') {
+      const errorJson = await response.json();
+      console.error('ElevenLabs API JSON Error:', errorJson);
+      return res.status(500).json({ message: 'ElevenLabs API Error', error: JSON.stringify(errorJson) });
     }
 
     const audioBuffer = Buffer.from(await response.arrayBuffer());
@@ -55,22 +97,4 @@ export default async function handler(req, res) {
     console.error('API route error:', err);
     res.status(500).json({ message: 'Internal server error', error: err.message });
   }
-}
-
-// api/add-pronunciation.js
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' });
-  }
-
-  const { word, phoneme } = req.body;
-  if (!word || !phoneme) {
-    return res.status(400).json({ message: 'Word and phoneme are required' });
-  }
-
-  // Save the pronunciation rule (in memory or database)
-  customPronunciations.push({ word, phoneme });
-
-  return res.status(200).json({ message: 'Pronunciation saved' });
 }
