@@ -21,24 +21,10 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         text,
-        model_id: 'eleven_flash_v2',
+        model_id: 'eleven_monolingual_v1',
         voice_settings: {
           stability: 0.5,
-          similarity_boost: 0.75,
-          pronunciation: {
-            rules: [
-              {
-                word: "Josiah",
-                phoneme: "ˈdʒoʊzaɪə",
-                alphabet: "ipa"
-              }
-                {
-                word: "MYGAs",
-                phoneme: "maɪɡʌz",
-                alphabet: "ipa"
-              }
-            ]
-          }
+          similarity_boost: 0.75
         }
       })
     });
