@@ -12,14 +12,15 @@
     <textarea id="textInput" placeholder="Type something to convert to speech..."></textarea>
     <button id="speakBtn">Speak</button>
     <audio id="audioPlayer" controls></audio>
-    <div class="pronunciation-editor">
-  <h2>Custom Pronunciations</h2>
-  <input type="text" id="wordInput" placeholder="Word" />
-  <input type="text" id="phonemeInput" placeholder="IPA Pronunciation" />
-  <button id="addPronunciationBtn">Add</button>
-</div>
 
+    <div class="pronunciation-editor">
+      <h2>Custom Pronunciations</h2>
+      <input type="text" id="wordInput" placeholder="Word" />
+      <input type="text" id="phonemeInput" placeholder="IPA Pronunciation" />
+      <button id="addPronunciationBtn">Add</button>
+    </div>
   </div>
+
   <script>
     const speakBtn = document.getElementById('speakBtn');
     const textInput = document.getElementById('textInput');
@@ -32,15 +33,11 @@
       try {
         const response = await fetch('/api/tts', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text })
         });
 
-        if (!response.ok) {
-          throw new Error('API request failed');
-        }
+        if (!response.ok) throw new Error('API request failed');
 
         const blob = await response.blob();
         const audioUrl = URL.createObjectURL(blob);
@@ -49,6 +46,29 @@
       } catch (err) {
         console.error(err);
         alert('Something went wrong. Check the console for details.');
+      }
+    });
+
+    document.getElementById('addPronunciationBtn').addEventListener('click', async () => {
+      const word = document.getElementById('wordInput').value.trim();
+      const phoneme = document.getElementById('phonemeInput').value.trim();
+      if (!word || !phoneme) return alert('Enter both word and pronunciation.');
+
+      try {
+        const res = await fetch('/api/add-pronunciation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ word, phoneme })
+        });
+
+        if (!res.ok) throw new Error('Failed to save pronunciation');
+
+        alert('Pronunciation saved!');
+        document.getElementById('wordInput').value = '';
+        document.getElementById('phonemeInput').value = '';
+      } catch (err) {
+        console.error(err);
+        alert('Error saving pronunciation.');
       }
     });
   </script>
