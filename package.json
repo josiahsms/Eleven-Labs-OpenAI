@@ -1,11 +1,21 @@
 {
-  "name": "Eleven-labs-openai",
+  "name": "your-project-name",
   "version": "1.0.0",
+  "description": "Text to Speech app using ElevenLabs API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node api/tts.js",
+    "dev": "vercel dev",
+    "build": "vercel build"
+  },
   "dependencies": {
-    "firebase": "^9.0.0",
-    "other-dependencies": "version"
+    "firebase": "^9.6.1",
+    "node-fetch": "^2.6.1"
   },
   "devDependencies": {
-    "dev-dependencies": "version"
+    "vercel": "^23.0.0"
+  },
+  "engines": {
+    "node": "14.x"
   }
 }
