@@ -24,7 +24,16 @@ export default async function handler(req, res) {
         model_id: 'eleven_flash_v2',
         voice_settings: {
           stability: 0.5,
-          similarity_boost: 0.75
+          similarity_boost: 0.75,
+          pronunciation: {
+            rules: [
+              {
+                word: "Josiah",
+                phoneme: "ˈdʒoʊzaɪə",
+                alphabet: "ipa"
+              }
+            ]
+          }
         }
       })
     });
